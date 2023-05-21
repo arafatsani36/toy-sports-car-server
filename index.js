@@ -45,13 +45,27 @@ async function run() {
       res.send(result)
   })
 
-  // add toys 
+  // add toys
+
+  app.get('/toys', async(req, res) => {
+    let query = {};
+    if(req.query?.email){
+      query = {email: req.query.email}
+    }
+    const cursor = addToyCollection.find(query);
+    const result = await cursor.toArray();
+    res.send(result)
+  })
   app.post('/toys', async(req, res) => {
     const toy = req.body;
-    // console.log(toy)
     const result = await addToyCollection.insertOne(toy);
     res.send(result)
   })
+
+ 
+  
+
+
 
 
     // Send a ping to confirm a successful connection
