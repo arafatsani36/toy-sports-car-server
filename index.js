@@ -62,6 +62,12 @@ async function run() {
     res.send(result)
   })
 
+  app.get('/toys/:id', async(req, res) => {
+    const id = req.params.id
+   const query = {_id : new ObjectId(id)}
+   const result = await addToyCollection.findOne(query);
+   res.send(result)
+  })
 
   app.post('/toys', async(req, res) => {
     const toy = req.body;
@@ -69,17 +75,20 @@ async function run() {
     res.send(result)
   })
 
-  app.patch('/toys/:id' , async(req, res) => {
+  app.put('/toys/:id' , async(req, res) => {
     const id = req.params.id;
-   const query = {_id: new ObjectId(id)}
-    const updateToys = req.body;
-    const updateDoc = {
+    const query = {_id: new ObjectId(id)};
+    const options = {upsert: true};
+    const updateToy = req.body;
+    const toy = {
       $set: {
-        status : updateToys.status
+        price : updateToy.price,
+        quantity :updateToy.quantity,
+        description :updateToy.description
       },
     };
 
-    const result = await addToyCollection.updateOne(query, updateDoc);
+    const result = await addToyCollection.updateOne(query, toy , options);
     res.send(result)
 
 
@@ -116,3 +125,13 @@ app.get('/' , (req, res) => {
 app.listen(port, () => {
     console.log(`toy-sports-car-server is running on port ${port}`)
 })
+
+
+
+
+const corsOptions ={
+  origin:'*',
+  credentials:true,
+  optionSuccessStatus:200,
+}
+app.use(cors(corsOptions))
