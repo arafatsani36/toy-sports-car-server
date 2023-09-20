@@ -26,27 +26,77 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
+    const UsersCollection = client.db('toySports').collection('users')
     const categoryCollection = client.db('toySports').collection('category');
     const addToyCollection = client.db('toySports').collection('toys')
+    
 
  
+// user api 
+  app.get('/users', async(req, res) =>{
+    const result = await UsersCollection.find().toArray();
+    res.send(result);
+  })
 
-  app.get('/category/:text', async(req, res) => {
-        // console.log(req.params.text)
-        if(req.params.text == "spider-man" || req.params.text == "iron-man" || req.params.text == "hulk"){
-            const result = await categoryCollection.find({status : req.params.text}).toArray();
-            return res.send(result)
+  app.post('/users', async(req, res) => {
+    const user = req.body;
+    console.log(user)
+    const query = {email: user.email}
+    const existingUser = await UsersCollection.findOne(query)
+    if(existingUser){
+      return res.send({message : 'user already exist'})
+    }
+    const result = await UsersCollection.insertOne(user);
+    res.send(result);
+  })
 
+  // admin chacke
+  app.get('/users/admin/:email', async(req, res) => {
+    const email = req.params;
+    const query = {email : email}
+    const user = await UsersCollection.findOne(query);
+    const result = {admin : user ?.role === 'admin'}
+    res.send(result);
+  })
+
+  // user role update 
+  app.patch('/users/admin/:id', async(req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id)};
+
+    const updateDoc = {
+      $set: {
+        role: 'admin'
+      },
+    };
+
+    const result = await UsersCollection.updateOne(filter, updateDoc);
+    res.send(result)
+
+  })
+
+
+
+// category api 
+  app.get('/category/:status', async(req, res) => {
+         const { status } = req.params;
+
+        if(status == "dc" || status == "marvel" || status == "avengers"){
+          const result = await categoryCollection.find({role : req.params.status}).toArray();
+          return res.send(result)
+          
         }
     })
+
+
+
     app.get('/category', async(req, res) => {
       const cursor = categoryCollection.find();
       const result = await cursor.toArray();
       res.send(result)
   })
 
-  // add toys
-
+  // add toys api
   app.get('/toys', async(req, res) => {
     let query = {};
     if(req.query?.email){
@@ -56,6 +106,8 @@ async function run() {
     const result = await cursor.toArray();
     res.send(result)
   })
+
+  
   app.get('/toys', async(req, res) => {
     const cursor = addToyCollection.find(query);
     const result = await cursor.toArray();
@@ -74,6 +126,8 @@ async function run() {
     const result = await addToyCollection.insertOne(toy);
     res.send(result)
   })
+
+
 
   app.put('/toys/:id' , async(req, res) => {
     const id = req.params.id;
