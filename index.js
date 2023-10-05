@@ -40,7 +40,6 @@ async function run() {
 
   app.post('/users', async(req, res) => {
     const user = req.body;
-    console.log(user)
     const query = {email: user.email}
     const existingUser = await UsersCollection.findOne(query)
     if(existingUser){
@@ -50,9 +49,9 @@ async function run() {
     res.send(result);
   })
 
-  // admin chacke
+  // admin roll check
   app.get('/users/admin/:email', async(req, res) => {
-    const email = req.params;
+    const email = req.params.email;
     const query = {email : email}
     const user = await UsersCollection.findOne(query);
     const result = {admin : user ?.role === 'admin'}
@@ -75,6 +74,14 @@ async function run() {
 
   })
 
+  // users delete 
+  app.delete('/users/:id', async(req, res) => {
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)};
+    const result = await UsersCollection.deleteOne(query);
+    res.send(result)
+  })
+
 
 
 // category api 
@@ -95,6 +102,13 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result)
   })
+
+  // all toy api 
+
+  // app.get('/toys', async(req, res) => {
+  //   const result = await addToyCollection.find().toArray();
+  //   res.send(result);
+  // })
 
   // add toys api
   app.get('/toys', async(req, res) => {
@@ -121,12 +135,42 @@ async function run() {
    res.send(result)
   })
 
-  app.post('/toys', async(req, res) => {
-    const toy = req.body;
-    const result = await addToyCollection.insertOne(toy);
-    res.send(result)
-  })
 
+// new toy add api 
+app.post('/toys', async(req, res) => {
+  const toy = req.body;
+  const result = await addToyCollection.insertOne(toy);
+  res.send(result)
+})
+
+
+// appoved toy 
+app.patch('/toys/approved/:id', async(req, res) => {
+  const id = req.params.id;
+
+  const query = {_id: new ObjectId(id)}
+  const updateDoc = {
+    $set: {
+      status: 'approved',
+    },
+  };
+  const result = await addToyCollection.updateOne(query, updateDoc);
+  res.send(result);
+})
+
+
+// denied toy 
+app.patch('/toys/denied/:id', async(req, res) => {
+  const id = req.params.id;
+  const query = {_id: new ObjectId(id)};
+  const updateDocument = {
+    $set: {
+       status: 'denied',
+    },
+ };
+ const result = await addToyCollection.updateOne(query, updateDocument);
+ res.send(result);
+})
 
 
   app.put('/toys/:id' , async(req, res) => {
@@ -136,6 +180,12 @@ async function run() {
     const updateToy = req.body;
     const toy = {
       $set: {
+        picture: updateToy.picture,
+        toyname: updateToy.toyname,
+        sellerName: updateToy.sellerName,
+        email: updateToy.email,
+        category: updateToy.category,
+        rating: updateToy.rating,
         price : updateToy.price,
         quantity :updateToy.quantity,
         description :updateToy.description
@@ -155,6 +205,25 @@ async function run() {
     const result = await addToyCollection.deleteOne(query);
     res.send(result)
   })
+
+
+  // toys filter
+  app.get('/toys/:status', async(req, res) => {
+    const { status } = req.params;
+
+   if(status == "pending" || status == "approved" || status == "denied"){
+     const result = await addToyCollection.find({role : req.params.status}).toArray();
+     return res.send(result)
+     
+   }
+})
+
+
+
+
+
+  
+
 
  
     // Send a ping to confirm a successful connection
